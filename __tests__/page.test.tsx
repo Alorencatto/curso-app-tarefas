@@ -3,8 +3,8 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import Page from "../app/page";
 import { STORAGE_KEY, initialTasks, type Task } from "../app/tasks";
 
-// Obs.: os dois bugs do app (duplicação ao salvar e exceção em "Detalhes")
-// são intencionais para o curso e, por isso, não são cobertos aqui.
+// Obs.: a duplicação ao salvar (clique duplo) tem teste de regressão abaixo.
+// A exceção em "Detalhes" continua intencional no curso e não é coberta aqui.
 
 function items() {
   return screen.getAllByRole("listitem");
@@ -65,6 +65,23 @@ describe("Page", () => {
     expect(within(first).getByText("ativa")).toBeDefined();
     expect(input.value).toBe("");
     expect(screen.getByRole("button", { name: "Salvar" })).toBeDefined();
+  });
+
+  it("cria uma única tarefa com dois cliques rápidos em Salvar", () => {
+    render(<Page />);
+    const input = screen.getByLabelText("Título da tarefa") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Tarefa única" } });
+
+    const button = screen.getByRole("button", { name: "Salvar" }) as HTMLButtonElement;
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(screen.getAllByText("Tarefa única")).toHaveLength(1);
+    expect(items()).toHaveLength(initialTasks.length + 1);
   });
 
   it("arquiva uma tarefa ativa", () => {

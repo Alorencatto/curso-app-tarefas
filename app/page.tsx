@@ -39,17 +39,21 @@ export default function Page() {
     const text = title.trim();
     if (!text) return;
 
-    // BUG 1 (intencional): não há proteção contra cliques repetidos.
-    // O botão não é desativado e o campo só é limpo depois do atraso,
-    // então dois cliques rápidos criam duas tarefas.
+    // Ignora cliques repetidos enquanto um salvamento está em andamento.
+    if (saving) return;
+
     setSaving(true);
     setTimeout(() => {
-      setTasks((current) => [
-        { id: crypto.randomUUID(), title: text, status: "active", createdAt: new Date().toISOString() },
-        ...current,
-      ]);
-      setTitle("");
-      setSaving(false);
+      try {
+        setTasks((current) => [
+          { id: crypto.randomUUID(), title: text, status: "active", createdAt: new Date().toISOString() },
+          ...current,
+        ]);
+        setTitle("");
+      } finally {
+        // Libera o botão mesmo se o salvamento falhar, permitindo nova tentativa.
+        setSaving(false);
+      }
     }, SAVE_DELAY_MS);
   }
 
@@ -79,7 +83,7 @@ export default function Page() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-        <button type="submit">{saving ? "Salvando…" : "Salvar"}</button>
+        <button type="submit" disabled={saving}>{saving ? "Salvando…" : "Salvar"}</button>
       </form>
 
       <ul className="list">
