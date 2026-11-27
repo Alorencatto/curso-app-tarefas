@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import Page from "../app/page";
+import VersionLabel from "../app/version";
 import { STORAGE_KEY, initialTasks, type Task } from "../app/tasks";
+import packageJson from "../package.json";
 
 const captureException = vi.hoisted(() =>
   vi.fn<(error: unknown, context?: unknown) => string | undefined>(() => "evento-teste-123"),
@@ -175,5 +177,14 @@ describe("Page", () => {
     expect(items()).toHaveLength(before);
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Task[];
     expect(stored).toEqual(initialTasks);
+  });
+});
+
+describe("VersionLabel", () => {
+  it("exibe a versão definida no package.json", () => {
+    render(<VersionLabel />);
+
+    expect(screen.getByRole("contentinfo", { name: "Versão da aplicação" }).textContent)
+      .toBe(`Versão ${packageJson.version}`);
   });
 });
