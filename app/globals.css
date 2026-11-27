@@ -22,3 +22,4 @@ button:hover { background: #1d4ed8; }
 .test-error p { margin: 0 0 8px; }
 .test-error > div button + button { margin-left: 8px; background: #e5e7eb; color: #1c1e21; }
 .test-error > div button + button:hover { background: #d1d5db; }
+.app-version { width: min(100%, 640px); margin: 24px auto 0; padding: 0 16px 20px; color: #59636e; font-size: .875rem; text-align: center; }
