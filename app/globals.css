@@ -7,21 +7,25 @@ h1 { margin-top: 0; }
 .form textarea { resize: vertical; }
 .form button { justify-self: start; }
 button { padding: 8px 12px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; font-size: .9rem; cursor: pointer; }
-button:hover { background: #1d4ed8; }
+button:focus-visible, a:focus-visible { outline: 3px solid #111827; outline-offset: 3px; }
+button:disabled { cursor: wait; opacity: .7; }
+.button-primary { background: #1d4ed8; }
+.button-primary:hover { background: #1e40af; }
+.button-secondary { background: #e5e7eb; color: #1c1e21; }
+.button-secondary:hover { background: #d1d5db; }
+.button-danger { background: #b42318; }
+.button-danger:hover { background: #912018; }
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; }
 .item .title { flex: 1; }
 .item.archived .title { color: #7b838c; text-decoration: line-through; }
 .badge { font-size: .75rem; padding: 2px 8px; border-radius: 999px; background: #dcfce7; color: #166534; }
 .archived .badge { background: #e5e7eb; color: #4b5563; }
-.item button { background: #e5e7eb; color: #1c1e21; }
-.item button:hover { background: #d1d5db; }
 .details { margin-top: 16px; padding: 16px; background: #fff; border: 1px solid #e3e6ea; border-left: 4px solid #2563eb; border-radius: 8px; }
 .details-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .details h2 { margin: 0; font-size: 1.125rem; }
 .details p { margin: 12px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.details-heading button { flex-shrink: 0; background: #e5e7eb; color: #1c1e21; }
-.details-heading button:hover { background: #d1d5db; }
+.details-heading button { flex-shrink: 0; }
 @media (max-width: 480px) {
   .item { flex-wrap: wrap; }
   .item .title { flex-basis: 100%; }
@@ -32,6 +36,5 @@ button:hover { background: #1d4ed8; }
 .test-error { margin-top: 24px; display: grid; gap: 12px; justify-items: start; }
 .test-error > div { padding: 12px; background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; }
 .test-error p { margin: 0 0 8px; }
-.test-error > div button + button { margin-left: 8px; background: #e5e7eb; color: #1c1e21; }
-.test-error > div button + button:hover { background: #d1d5db; }
+.test-error > div button + button { margin-left: 8px; }
 .app-version { width: min(100%, 640px); margin: 24px auto 0; padding: 0 16px 20px; color: #59636e; font-size: .875rem; text-align: center; }

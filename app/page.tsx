@@ -107,7 +107,7 @@ export default function Page() {
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
         />
-        <button type="submit" disabled={saving}>{saving ? "Salvando…" : "Salvar"}</button>
+        <button className="button-primary" type="submit" disabled={saving}>{saving ? "Salvando…" : "Salvar"}</button>
       </form>
 
       <ul className="list">
@@ -115,9 +115,9 @@ export default function Page() {
           <li key={task.id} className={task.status === "archived" ? "item archived" : "item"}>
             <span className="title">{task.title}</span>
             <span className="badge">{task.status === "archived" ? "arquivada" : "ativa"}</span>
-            <button type="button" onClick={() => openDetails(task)}>Detalhes</button>
+            <button className="button-secondary" type="button" onClick={() => openDetails(task)}>Detalhes</button>
             {task.status === "active" && (
-              <button type="button" onClick={() => archive(task.id)}>Arquivar</button>
+              <button className="button-danger" type="button" onClick={() => archive(task.id)}>Arquivar</button>
             )}
           </li>
         ))}
@@ -127,7 +127,7 @@ export default function Page() {
         <section className="details" aria-labelledby="task-details-title">
           <div className="details-heading">
             <h2 id="task-details-title">{selectedTask.title}</h2>
-            <button type="button" onClick={() => setSelectedTask(null)}>Fechar detalhes</button>
+            <button className="button-secondary" type="button" onClick={() => setSelectedTask(null)}>Fechar detalhes</button>
           </div>
           <p>{selectedTask.description?.trim() || "Esta tarefa não tem descrição."}</p>
         </section>
@@ -135,6 +135,7 @@ export default function Page() {
 
       <section className="test-error">
         <button
+          className="button-secondary"
           type="button"
           onClick={() => {
             setTestErrorStatus(null);
@@ -150,8 +151,8 @@ export default function Page() {
             <p id="test-error-descricao">
               Isso envia um erro proposital para o Sentry, para testar a captura e a triagem. Suas tarefas não são alteradas.
             </p>
-            <button type="button" onClick={generateTestError}>Gerar erro</button>
-            <button type="button" onClick={() => setConfirmingTestError(false)}>Cancelar</button>
+            <button className="button-danger" type="button" onClick={generateTestError}>Gerar erro</button>
+            <button className="button-secondary" type="button" onClick={() => setConfirmingTestError(false)}>Cancelar</button>
           </div>
         )}
 
