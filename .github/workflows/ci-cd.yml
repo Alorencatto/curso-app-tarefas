@@ -1,0 +1,99 @@
+name: CI/CD
+
+# - Pull requests para a main: roda apenas a CI (typecheck, testes e build).
+# - Merge (push) na main: roda a CI e, se passar, faz o deploy de produção na Vercel.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Evita deploys simultâneos: um novo merge aguarda o anterior terminar.
+concurrency:
+  group: ci-cd-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    name: Typecheck, testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Testes unitários
+        run: npm test
+
+      # Sem NEXT_PUBLIC_SENTRY_DSN o SDK fica desativado, então o build não depende de segredos.
+      - name: Build
+        run: npm run build
+
+  deploy:
+    name: Deploy de produção na Vercel
+    needs: ci
+    # Só em push na main, ou seja, quando um PR é mergeado (ou há push direto).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Validar segredos da Vercel
+        run: |
+          missing=0
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::O segredo $name não está configurado no repositório."
+              missing=1
+            fi
+          done
+          exit $missing
+
+      - name: Instalar a Vercel CLI
+        run: npm install --global vercel@latest
+
+      # Baixa as variáveis de ambiente e a configuração do projeto de produção na Vercel.
+      - name: Vercel pull
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Vercel build
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Vercel deploy
+        id: deploy
+        run: |
+          # A CLI imprime a URL (ou um JSON com ela) no stdout; os logs vão para o stderr.
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" | tee deploy-output.txt
+          url=$(grep -oE 'https://[A-Za-z0-9._-]+\.vercel\.app' deploy-output.txt | head -n 1)
+          if [ -z "$url" ]; then
+            echo "::error::Não foi possível identificar a URL do deploy."
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### Deploy de produção concluído" >> "$GITHUB_STEP_SUMMARY"
+          echo "$url" >> "$GITHUB_STEP_SUMMARY"
