@@ -12,7 +12,6 @@ const captureException = vi.hoisted(() =>
 vi.mock("@sentry/nextjs", () => ({ captureException }));
 
 // Obs.: a duplicação ao salvar (clique duplo) tem teste de regressão abaixo.
-// A exceção em "Detalhes" continua intencional no curso e não é coberta aqui.
 
 function items() {
   return screen.getAllByRole("listitem");
@@ -44,6 +43,42 @@ describe("Page", () => {
     expect(within(archived!).queryByRole("button", { name: "Arquivar" })).toBeNull();
   });
 
+  it("mostra a descrição completa da tarefa selecionada e atualiza ao selecionar outra", () => {
+    render(<Page />);
+
+    const first = items().find((li) => within(li).queryByText("Revisar a issue #1 no GitHub"))!;
+    fireEvent.click(within(first).getByRole("button", { name: "Detalhes" }));
+    expect(screen.getByRole("region", { name: "Revisar a issue #1 no GitHub" }).textContent)
+      .toContain("Conferir os critérios de aceite, identificar a causa do problema e registrar os próximos passos.");
+
+    const second = items().find((li) => within(li).queryByText("Abrir PR com a correção"))!;
+    fireEvent.click(within(second).getByRole("button", { name: "Detalhes" }));
+    const details = screen.getByRole("region", { name: "Abrir PR com a correção" });
+    expect(details.textContent).toContain("Enviar a mudança em uma branch própria");
+    expect(screen.queryByRole("region", { name: "Revisar a issue #1 no GitHub" })).toBeNull();
+  });
+
+  it("informa quando a tarefa não tem descrição e permite fechar os detalhes", () => {
+    render(<Page />);
+
+    const task = items().find((li) => within(li).queryByText("Aprovar o preview na Vercel"))!;
+    fireEvent.click(within(task).getByRole("button", { name: "Detalhes" }));
+
+    expect(screen.getByText("Esta tarefa não tem descrição.")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Fechar detalhes" }));
+    expect(screen.queryByText("Esta tarefa não tem descrição.")).toBeNull();
+    expect(items()).toHaveLength(initialTasks.length);
+  });
+
+  it("abre os detalhes de tarefas arquivadas sem falhar", () => {
+    render(<Page />);
+
+    const archived = items().find((li) => within(li).queryByText("Tarefa antiga já arquivada"))!;
+    fireEvent.click(within(archived).getByRole("button", { name: "Detalhes" }));
+
+    expect(screen.getByText("Esta tarefa foi concluída e arquivada como exemplo.")).toBeDefined();
+  });
+
   it("não cria tarefa quando o título está vazio", () => {
     render(<Page />);
     fireEvent.change(screen.getByLabelText("Título da tarefa"), { target: { value: "   " } });
@@ -57,7 +92,9 @@ describe("Page", () => {
   it("cria uma tarefa ativa no topo da lista após o atraso de salvamento", () => {
     render(<Page />);
     const input = screen.getByLabelText("Título da tarefa") as HTMLInputElement;
+    const description = screen.getByLabelText("Descrição da tarefa (opcional)") as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: "  Escrever testes  " } });
+    fireEvent.change(description, { target: { value: "  Cobrir a abertura dos detalhes.  " } });
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
 
     // Durante o salvamento o botão indica progresso e a tarefa ainda não existe.
@@ -73,7 +110,11 @@ describe("Page", () => {
     expect(within(first).getByText("Escrever testes")).toBeDefined();
     expect(within(first).getByText("ativa")).toBeDefined();
     expect(input.value).toBe("");
+    expect(description.value).toBe("");
     expect(screen.getByRole("button", { name: "Salvar" })).toBeDefined();
+
+    fireEvent.click(within(items()[0]).getByRole("button", { name: "Detalhes" }));
+    expect(screen.getByText("Cobrir a abertura dos detalhes.")).toBeDefined();
   });
 
   it("cria uma única tarefa com dois cliques rápidos em Salvar", () => {

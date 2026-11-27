@@ -6,20 +6,13 @@ import { STORAGE_KEY, initialTasks, type Task } from "./tasks";
 
 const SAVE_DELAY_MS = 600; // atraso fixo para a demonstração ser previsível
 
-function describeTask(task: Task): string {
-  // BUG 2 (intencional): tarefas arquivadas não têm `archive`, então
-  // `task.archive!.archivedAt` lança TypeError ao abrir os detalhes.
-  const when = new Date(task.archive!.archivedAt).toLocaleDateString("pt-BR");
-  const status = task.status === "archived" ? `Arquivada em ${when}: ${task.archive!.reason}` : "Ativa";
-  return `${task.title} — ${status}`;
-}
-
 export default function Page() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [loaded, setLoaded] = useState(false);
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
-  const [details, setDetails] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [confirmingTestError, setConfirmingTestError] = useState(false);
   const [testErrorStatus, setTestErrorStatus] = useState<string | null>(null);
 
@@ -49,10 +42,11 @@ export default function Page() {
     setTimeout(() => {
       try {
         setTasks((current) => [
-          { id: crypto.randomUUID(), title: text, status: "active", createdAt: new Date().toISOString() },
+          { id: crypto.randomUUID(), title: text, description: description.trim(), status: "active", createdAt: new Date().toISOString() },
           ...current,
         ]);
         setTitle("");
+        setDescription("");
       } finally {
         // Libera o botão mesmo se o salvamento falhar, permitindo nova tentativa.
         setSaving(false);
@@ -62,17 +56,17 @@ export default function Page() {
 
   function archive(id: string) {
     setTasks((current) => current.map((t) => (t.id === id ? { ...t, status: "archived" } : t)));
-    setDetails(null);
+    setSelectedTask(null);
   }
 
   function openDetails(task: Task) {
-    setDetails(describeTask(task));
+    setSelectedTask(task);
   }
 
   function resetData() {
     localStorage.removeItem(STORAGE_KEY);
     setTasks(initialTasks);
-    setDetails(null);
+    setSelectedTask(null);
   }
 
   function generateTestError() {
@@ -106,6 +100,13 @@ export default function Page() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
+        <textarea
+          aria-label="Descrição da tarefa (opcional)"
+          placeholder="Descrição da tarefa (opcional)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={2}
+        />
         <button type="submit" disabled={saving}>{saving ? "Salvando…" : "Salvar"}</button>
       </form>
 
@@ -122,7 +123,15 @@ export default function Page() {
         ))}
       </ul>
 
-      {details && <p className="details" role="status">{details}</p>}
+      {selectedTask && (
+        <section className="details" aria-labelledby="task-details-title">
+          <div className="details-heading">
+            <h2 id="task-details-title">{selectedTask.title}</h2>
+            <button type="button" onClick={() => setSelectedTask(null)}>Fechar detalhes</button>
+          </div>
+          <p>{selectedTask.description?.trim() || "Esta tarefa não tem descrição."}</p>
+        </section>
+      )}
 
       <section className="test-error">
         <button
