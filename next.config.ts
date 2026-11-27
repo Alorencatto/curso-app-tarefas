@@ -1,11 +1,8 @@
 import type { NextConfig } from "next";
-import { execFileSync } from "node:child_process";
 import { withSentryConfig } from "@sentry/nextjs/config";
+import { getCommitMetadata } from "./lib/commit-metadata";
 
-const commitSha = process.env.VERCEL_GIT_COMMIT_SHA;
-const commitDate = commitSha && /^[a-f0-9]{40}$/i.test(commitSha)
-  ? execFileSync("git", ["show", "-s", "--format=%cI", commitSha], { encoding: "utf8" }).trim()
-  : undefined;
+const { sha: commitSha, date: commitDate } = getCommitMetadata();
 
 const nextConfig: NextConfig = {
   env: {
