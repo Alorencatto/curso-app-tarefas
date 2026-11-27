@@ -222,10 +222,26 @@ describe("Page", () => {
 });
 
 describe("VersionLabel", () => {
-  it("exibe a versão definida no package.json", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("exibe a versão definida no package.json e indica desenvolvimento local sem SHA", () => {
+    vi.stubEnv("NEXT_PUBLIC_GIT_COMMIT_SHA", "");
     render(<VersionLabel />);
 
     expect(screen.getByRole("contentinfo", { name: "Versão da aplicação" }).textContent)
-      .toBe(`Versão ${packageJson.version}`);
+      .toBe(`Versão ${packageJson.version} · desenvolvimento local`);
+  });
+
+  it("mostra o SHA curto e vincula ao commit completo no GitHub", () => {
+    const commitSha = "0123456789abcdef0123456789abcdef01234567";
+    vi.stubEnv("NEXT_PUBLIC_GIT_COMMIT_SHA", commitSha);
+    render(<VersionLabel />);
+
+    expect(screen.getByRole("link", { name: `Commit ${commitSha}` })).toMatchObject({
+      href: `https://github.com/Alorencatto/curso-app-tarefas/commit/${commitSha}`,
+      textContent: commitSha.slice(0, 7),
+    });
   });
 });
