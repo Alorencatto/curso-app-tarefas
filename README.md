@@ -37,6 +37,12 @@ Na Vercel, defina as mesmas variáveis em *Project Settings → Environment Vari
 
 Para voltar ao estado inicial, use **Restaurar dados de exemplo** na página.
 
+## Simular erro de teste (Sentry)
+
+A tela principal tem o botão **Gerar erro de teste**. Ele pede confirmação, explica que o erro é proposital e só envia algo ao Sentry depois de **Gerar erro**; **Cancelar** fecha a confirmação sem capturar nada. As tarefas existentes não são alteradas.
+
+O evento chega ao projeto `alorencatto/app-de-tarefas-curso` com o ambiente, a versão do deploy (quando disponível) e um fingerprint fixo (`erro-de-teste-app-tarefas`), que agrupa os erros de teste em uma única issue do Sentry. O ID do evento aparece na tela para rastrear a issue criada na triagem.
+
 ## Demonstrações do curso
 
 ### 1. Relato humano → produção
