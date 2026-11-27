@@ -3,6 +3,12 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import Page from "../app/page";
 import { STORAGE_KEY, initialTasks, type Task } from "../app/tasks";
 
+const captureException = vi.hoisted(() =>
+  vi.fn<(error: unknown, context?: unknown) => string | undefined>(() => "evento-teste-123"),
+);
+
+vi.mock("@sentry/nextjs", () => ({ captureException }));
+
 // Obs.: a duplicação ao salvar (clique duplo) tem teste de regressão abaixo.
 // A exceção em "Detalhes" continua intencional no curso e não é coberta aqui.
 
@@ -13,6 +19,7 @@ function items() {
 describe("Page", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    captureException.mockClear();
   });
 
   afterEach(() => {
@@ -130,5 +137,43 @@ describe("Page", () => {
     const restored = items().find((li) => within(li).queryByText("Revisar a issue #1 no GitHub"))!;
     expect(within(restored).getByText("ativa")).toBeDefined();
     expect(items()).toHaveLength(initialTasks.length);
+  });
+
+  it("explica o erro proposital e cancela sem enviar evento ao Sentry", () => {
+    render(<Page />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Gerar erro de teste" }));
+
+    expect(screen.getByText(/erro proposital para o Sentry/i)).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(captureException).not.toHaveBeenCalled();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("envia um único erro de teste ao Sentry e preserva as tarefas", () => {
+    render(<Page />);
+    const before = items().length;
+
+    fireEvent.click(screen.getByRole("button", { name: "Gerar erro de teste" }));
+    fireEvent.click(screen.getByRole("button", { name: "Gerar erro" }));
+
+    expect(captureException).toHaveBeenCalledTimes(1);
+    const [error, context] = captureException.mock.calls[0];
+    expect((error as Error).message).toMatch(/erro de teste/i);
+    expect(context).toMatchObject({
+      tags: { origem: "botao-erro-teste" },
+      fingerprint: ["erro-de-teste-app-tarefas"],
+    });
+
+    // A confirmação fecha e o usuário vê o ID do evento para rastrear a issue.
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.getByRole("status").textContent).toContain("evento-teste-123");
+
+    // Nenhuma tarefa é criada, removida ou alterada.
+    expect(items()).toHaveLength(before);
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Task[];
+    expect(stored).toEqual(initialTasks);
   });
 });

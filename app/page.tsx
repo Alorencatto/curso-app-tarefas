@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { STORAGE_KEY, initialTasks, type Task } from "./tasks";
 
 const SAVE_DELAY_MS = 600; // atraso fixo para a demonstração ser previsível
@@ -19,6 +20,8 @@ export default function Page() {
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
   const [details, setDetails] = useState<string | null>(null);
+  const [confirmingTestError, setConfirmingTestError] = useState(false);
+  const [testErrorStatus, setTestErrorStatus] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -72,6 +75,26 @@ export default function Page() {
     setDetails(null);
   }
 
+  function generateTestError() {
+    setConfirmingTestError(false);
+
+    // O fingerprint fixo agrupa todos os erros de teste na mesma issue do Sentry,
+    // evitando uma issue nova a cada clique.
+    const eventId = Sentry.captureException(
+      new Error("Erro de teste proposital para validar a captura no Sentry"),
+      {
+        tags: { origem: "botao-erro-teste", ambiente: "curso-app-tarefas" },
+        fingerprint: ["erro-de-teste-app-tarefas"],
+      },
+    );
+
+    setTestErrorStatus(
+      eventId
+        ? `Erro de teste enviado ao Sentry. ID do evento: ${eventId}`
+        : "Erro de teste gerado, mas o Sentry está desativado (configure NEXT_PUBLIC_SENTRY_DSN).",
+    );
+  }
+
   return (
     <main className="container">
       <h1>Tarefas</h1>
@@ -100,6 +123,31 @@ export default function Page() {
       </ul>
 
       {details && <p className="details" role="status">{details}</p>}
+
+      <section className="test-error">
+        <button
+          type="button"
+          onClick={() => {
+            setTestErrorStatus(null);
+            setConfirmingTestError(true);
+          }}
+        >
+          Gerar erro de teste
+        </button>
+
+        {confirmingTestError && (
+          <div role="alertdialog" aria-labelledby="test-error-titulo" aria-describedby="test-error-descricao">
+            <p id="test-error-titulo"><strong>Gerar um erro proposital?</strong></p>
+            <p id="test-error-descricao">
+              Isso envia um erro proposital para o Sentry, para testar a captura e a triagem. Suas tarefas não são alteradas.
+            </p>
+            <button type="button" onClick={generateTestError}>Gerar erro</button>
+            <button type="button" onClick={() => setConfirmingTestError(false)}>Cancelar</button>
+          </div>
+        )}
+
+        {testErrorStatus && <p role="status">{testErrorStatus}</p>}
+      </section>
 
       <button type="button" className="link" onClick={resetData}>
         Restaurar dados de exemplo

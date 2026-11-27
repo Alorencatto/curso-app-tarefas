@@ -17,3 +17,8 @@ button:hover { background: #1d4ed8; }
 .details { margin-top: 16px; padding: 12px; background: #fff; border-left: 4px solid #2563eb; border-radius: 4px; }
 .link { margin-top: 24px; background: none; color: #2563eb; padding: 0; text-decoration: underline; }
 .link:hover { background: none; }
+.test-error { margin-top: 24px; display: grid; gap: 12px; justify-items: start; }
+.test-error > div { padding: 12px; background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; }
+.test-error p { margin: 0 0 8px; }
+.test-error > div button + button { margin-left: 8px; background: #e5e7eb; color: #1c1e21; }
+.test-error > div button + button:hover { background: #d1d5db; }
