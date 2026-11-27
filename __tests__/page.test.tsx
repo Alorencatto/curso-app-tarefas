@@ -244,4 +244,17 @@ describe("VersionLabel", () => {
       textContent: commitSha.slice(0, 7),
     });
   });
+
+  it("exibe a data e hora do commit em UTC junto ao link da versão", () => {
+    const commitSha = "0123456789abcdef0123456789abcdef01234567";
+    vi.stubEnv("NEXT_PUBLIC_GIT_COMMIT_SHA", commitSha);
+    vi.stubEnv("NEXT_PUBLIC_GIT_COMMIT_DATE", "2026-11-27T20:10:27+00:00");
+    render(<VersionLabel />);
+
+    const footer = screen.getByRole("contentinfo", { name: "Versão da aplicação" });
+    expect(footer.textContent).toContain("27/11/2026");
+    expect(footer.textContent).toContain("UTC");
+    expect(screen.getByRole("link", { name: `Commit ${commitSha}` }).getAttribute("href"))
+      .toBe(`https://github.com/Alorencatto/curso-app-tarefas/commit/${commitSha}`);
+  });
 });

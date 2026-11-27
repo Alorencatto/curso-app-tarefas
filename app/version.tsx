@@ -2,6 +2,7 @@ import packageJson from "../package.json";
 
 export default function VersionLabel() {
   const commitSha = process.env.NEXT_PUBLIC_GIT_COMMIT_SHA;
+  const commitDate = process.env.NEXT_PUBLIC_GIT_COMMIT_DATE;
   const validCommitSha = commitSha && /^[a-f0-9]{40}$/i.test(commitSha)
     ? commitSha
     : undefined;
@@ -20,6 +21,15 @@ export default function VersionLabel() {
       ) : (
         "desenvolvimento local"
       )}
+      {validCommitSha && commitDate ? ` · ${new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "UTC",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZoneName: "short",
+      }).format(new Date(commitDate))}` : null}
     </footer>
   );
 }
