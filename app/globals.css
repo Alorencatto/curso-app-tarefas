@@ -19,7 +19,9 @@ button:disabled { cursor: wait; opacity: .7; }
 .item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; }
 .item .title { flex: 1; }
 .item.archived .title { color: #7b838c; text-decoration: line-through; }
+.item.completed .title { color: #59636e; text-decoration: line-through; }
 .badge { font-size: .75rem; padding: 2px 8px; border-radius: 999px; background: #dcfce7; color: #166534; }
+.completed .badge { background: #dbeafe; color: #1e40af; }
 .archived .badge { background: #e5e7eb; color: #4b5563; }
 .details { margin-top: 16px; padding: 16px; background: #fff; border: 1px solid #e3e6ea; border-left: 4px solid #2563eb; border-radius: 8px; }
 .details-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
