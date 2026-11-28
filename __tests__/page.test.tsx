@@ -70,6 +70,41 @@ describe("Page", () => {
     expect(items()).toHaveLength(initialTasks.length);
   });
 
+  it("edita título e descrição, persiste os dados e cancela sem salvar", () => {
+    const saved: Task[] = [
+      { id: "edit-1", title: "Título original", description: "Descrição original", status: "completed", createdAt: "2026-11-25T10:00:00.000Z" },
+      { id: "edit-2", title: "Outra tarefa", status: "active", createdAt: "2026-11-24T10:00:00.000Z" },
+    ];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    const { unmount } = render(<Page />);
+
+    fireEvent.click(within(items()[0]).getByRole("button", { name: "Editar" }));
+    expect((screen.getByLabelText("Título editado") as HTMLInputElement).value).toBe("Título original");
+    expect((screen.getByLabelText("Descrição editada") as HTMLTextAreaElement).value).toBe("Descrição original");
+    fireEvent.change(screen.getByLabelText("Título editado"), { target: { value: "Título corrigido" } });
+    fireEvent.change(screen.getByLabelText("Descrição editada"), { target: { value: "Descrição original e complemento" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar edição" }));
+
+    expect(within(items()[0]).getByText("Título corrigido")).toBeDefined();
+    expect(within(items()[0]).getByText("concluída")).toBeDefined();
+    fireEvent.click(within(items()[0]).getByRole("button", { name: "Detalhes" }));
+    expect(screen.getByText("Descrição original e complemento")).toBeDefined();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Task[]).toEqual([
+      { ...saved[0], title: "Título corrigido", description: "Descrição original e complemento" }, saved[1],
+    ]);
+
+    unmount();
+    render(<Page />);
+    expect(within(items()[0]).getByText("Título corrigido")).toBeDefined();
+    fireEvent.click(within(items()[0]).getByRole("button", { name: "Editar" }));
+    fireEvent.change(screen.getByLabelText("Título editado"), { target: { value: "Alteração descartada" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar edição" }));
+    expect(within(items()[0]).getByText("Título corrigido")).toBeDefined();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Task[]).toEqual([
+      { ...saved[0], title: "Título corrigido", description: "Descrição original e complemento" }, saved[1],
+    ]);
+  });
+
   it("abre os detalhes de tarefas arquivadas sem falhar", () => {
     render(<Page />);
 
