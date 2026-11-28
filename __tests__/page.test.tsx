@@ -144,6 +144,39 @@ describe("Page", () => {
     expect(within(updated).queryByRole("button", { name: "Arquivar" })).toBeNull();
   });
 
+  it("conclui e reabre uma tarefa preservando seus dados e estado salvo", () => {
+    const saved: Task[] = [
+      { id: "cycle-1", title: "Preparar entrega", description: "Validar a versão final", status: "active", createdAt: "2026-11-25T10:00:00.000Z" },
+    ];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    const { unmount } = render(<Page />);
+
+    const active = items()[0];
+    fireEvent.click(within(active).getByRole("button", { name: "Concluir" }));
+    const completed = items()[0];
+    expect(within(completed).getByText("concluída")).toBeDefined();
+    expect(within(completed).getByRole("button", { name: "Reabrir" })).toBeDefined();
+    expect(within(completed).queryByRole("button", { name: "Arquivar" })).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Task[]).toMatchObject([
+      { ...saved[0], status: "completed" },
+    ]);
+
+    unmount();
+    const reloaded = render(<Page />);
+    expect(within(items()[0]).getByText("concluída")).toBeDefined();
+    fireEvent.click(within(items()[0]).getByRole("button", { name: "Reabrir" }));
+    expect(within(items()[0]).getByText("ativa")).toBeDefined();
+    expect(within(items()[0]).getByRole("button", { name: "Concluir" })).toBeDefined();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Task[]).toEqual(saved);
+
+    fireEvent.click(within(items()[0]).getByRole("button", { name: "Concluir" }));
+    expect(within(items()[0]).getByText("concluída")).toBeDefined();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Task[]).toMatchObject([
+      { ...saved[0], status: "completed" },
+    ]);
+    reloaded.unmount();
+  });
+
   it("persiste as tarefas no localStorage", () => {
     render(<Page />);
     const target = items().find((li) => within(li).queryByText("Aprovar o preview na Vercel"))!;

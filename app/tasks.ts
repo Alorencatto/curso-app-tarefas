@@ -1,4 +1,4 @@
-export type TaskStatus = "active" | "archived";
+export type TaskStatus = "active" | "completed" | "archived";
 
 export type Task = {
   id: string;

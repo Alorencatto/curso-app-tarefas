@@ -59,6 +59,11 @@ export default function Page() {
     setSelectedTask(null);
   }
 
+  function updateStatus(id: string, status: "active" | "completed") {
+    setTasks((current) => current.map((t) => (t.id === id ? { ...t, status } : t)));
+    setSelectedTask(null);
+  }
+
   function openDetails(task: Task) {
     setSelectedTask(task);
   }
@@ -112,12 +117,20 @@ export default function Page() {
 
       <ul className="list">
         {tasks.map((task) => (
-          <li key={task.id} className={task.status === "archived" ? "item archived" : "item"}>
+          <li key={task.id} className={`item ${task.status}`}>
             <span className="title">{task.title}</span>
-            <span className="badge">{task.status === "archived" ? "arquivada" : "ativa"}</span>
+            <span className="badge">
+              {task.status === "archived" ? "arquivada" : task.status === "completed" ? "concluída" : "ativa"}
+            </span>
             <button className="button-secondary" type="button" onClick={() => openDetails(task)}>Detalhes</button>
             {task.status === "active" && (
-              <button className="button-danger" type="button" onClick={() => archive(task.id)}>Arquivar</button>
+              <>
+                <button className="button-primary" type="button" onClick={() => updateStatus(task.id, "completed")}>Concluir</button>
+                <button className="button-danger" type="button" onClick={() => archive(task.id)}>Arquivar</button>
+              </>
+            )}
+            {task.status === "completed" && (
+              <button className="button-primary" type="button" onClick={() => updateStatus(task.id, "active")}>Reabrir</button>
             )}
           </li>
         ))}
