@@ -13,6 +13,9 @@ export default function Page() {
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [confirmingTestError, setConfirmingTestError] = useState(false);
   const [testErrorStatus, setTestErrorStatus] = useState<string | null>(null);
 
@@ -66,6 +69,25 @@ export default function Page() {
 
   function openDetails(task: Task) {
     setSelectedTask(task);
+  }
+
+  function openEdit(task: Task) {
+    setEditingTaskId(task.id);
+    setEditTitle(task.title);
+    setEditDescription(task.description ?? "");
+  }
+
+  function saveEdit(event: React.FormEvent) {
+    event.preventDefault();
+    const title = editTitle.trim();
+    if (!title || editingTaskId === null) return;
+    setTasks((current) => current.map((task) => task.id === editingTaskId
+      ? { ...task, title, description: editDescription.trim() }
+      : task));
+    setSelectedTask((current) => current?.id === editingTaskId
+      ? { ...current, title, description: editDescription.trim() }
+      : current);
+    setEditingTaskId(null);
   }
 
   function resetData() {
@@ -123,6 +145,7 @@ export default function Page() {
               {task.status === "archived" ? "arquivada" : task.status === "completed" ? "concluída" : "ativa"}
             </span>
             <button className="button-secondary" type="button" onClick={() => openDetails(task)}>Detalhes</button>
+            <button className="button-secondary" type="button" onClick={() => openEdit(task)}>Editar</button>
             {task.status === "active" && (
               <>
                 <button className="button-primary" type="button" onClick={() => updateStatus(task.id, "completed")}>Concluir</button>
@@ -144,6 +167,15 @@ export default function Page() {
           </div>
           <p>{selectedTask.description?.trim() || "Esta tarefa não tem descrição."}</p>
         </section>
+      )}
+
+      {editingTaskId !== null && (
+        <form className="form" aria-label="Editar tarefa" onSubmit={saveEdit}>
+          <input aria-label="Título editado" value={editTitle} onChange={(event) => setEditTitle(event.target.value)} />
+          <textarea aria-label="Descrição editada" value={editDescription} onChange={(event) => setEditDescription(event.target.value)} rows={2} />
+          <button className="button-primary" type="submit">Salvar edição</button>
+          <button className="button-secondary" type="button" onClick={() => setEditingTaskId(null)}>Cancelar edição</button>
+        </form>
       )}
 
       <section className="test-error">
